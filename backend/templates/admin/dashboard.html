@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #111;
+        }
+        .header {
+            background: #111;
+            color: #fff;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 1.2rem; font-weight: 700; }
+        .header a { color: #aaa; text-decoration: none; font-size: 0.85rem; }
+        .header a:hover { color: #fff; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+        .section { margin-bottom: 48px; }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #111;
+        }
+        .flash { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; }
+        .flash-success { background: #dcfce7; color: #166534; }
+        .flash-error { background: #fee2e2; color: #b91c1c; }
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .card-header h3 { font-size: 1rem; }
+        .tags { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+        .tags span {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            color: #666;
+        }
+        .actions { display: flex; gap: 8px; margin-top: 12px; }
+        .btn {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-sm { padding: 6px 12px; font-size: 0.75rem; }
+        .btn-primary { background: #111; color: #fff; }
+        .btn-primary:hover { background: #000; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-outline { background: transparent; border: 1px solid #ddd; color: #666; }
+        .btn-outline:hover { border-color: #111; color: #111; }
+        .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .form-row input, .form-row textarea {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+            flex: 1;
+            min-width: 200px;
+        }
+        .form-row input:focus, .form-row textarea:focus { border-color: #111; }
+        .message-item {
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .message-item:last-child { border-bottom: none; }
+        .message-item small { color: #888; display: block; margin-top: 4px; }
+        .inline-form { display: inline; }
+        .edit-form { display: none; margin-top: 12px; }
+        .edit-form.active { display: block; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            padding: 32px;
+            width: 480px;
+            max-width: 90%;
+        }
+        .modal h2 { margin-bottom: 20px; }
+        .modal input, .modal textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+            margin-bottom: 12px;
+        }
+        .modal input:focus, .modal textarea:focus { border-color: #111; }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 8px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Admin Portfolio</h1>
+        <div>
+            <a href="/admin/logout" onclick="return confirm('Logout?')">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid-2">
+            <!-- PROYEK -->
+            <div class="section">
+                <h2 class="section-title">Proyek</h2>
+
+                <div class="card">
+                    <h3 style="margin-bottom:12px;">Tambah Proyek Baru</h3>
+                    <form method="POST" action="/admin/projects/add">
+                        <input type="text" name="title" placeholder="Judul Proyek" required style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;">
+                        <textarea name="description" rows="3" placeholder="Deskripsi" required style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;"></textarea>
+                        <input type="text" name="tags" placeholder="Tag (pisahkan dengan koma, contoh: HTML,CSS,JS)" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;">
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </form>
+                </div>
+
+                {% for project in projects %}
+                <div class="card">
+                    <div class="card-header">
+                        <h3>{{ project.title }}</h3>
+                        <small style="color:#888;">{{ project.created_at[:10] }}</small>
+                    </div>
+                    <p style="color:#666;font-size:0.85rem;">{{ project.description }}</p>
+                    <div class="tags">
+                        {% for tag in project.tags.split(',') %}
+                            <span>{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-sm btn-outline" onclick="toggleEdit({{ project.id }})">Edit</button>
+                        <form class="inline-form" method="POST" action="/admin/projects/delete/{{ project.id }}" onsubmit="return confirm('Hapus proyek ini?')">
+                            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                        </form>
+                    </div>
+                    <div class="edit-form" id="edit-{{ project.id }}">
+                        <form method="POST" action="/admin/projects/edit/{{ project.id }}">
+                            <input type="text" name="title" value="{{ project.title }}" required>
+                            <textarea name="description" rows="3" required>{{ project.description }}</textarea>
+                            <input type="text" name="tags" value="{{ project.tags }}">
+                            <div style="display:flex;gap:8px;">
+                                <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                                <button type="button" class="btn btn-sm btn-outline" onclick="toggleEdit({{ project.id }})">Batal</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                    <p style="color:#888;font-size:0.85rem;">Belum ada proyek.</p>
+                {% endfor %}
+            </div>
+
+            <!-- PESAN -->
+            <div class="section">
+                <h2 class="section-title">Pesan Masuk</h2>
+                {% for msg in messages %}
+                <div class="card message-item">
+                    <strong>{{ msg.name }}</strong>
+                    <a href="mailto:{{ msg.email }}" style="color:#666;font-size:0.85rem;text-decoration:none;">{{ msg.email }}</a>
+                    <p style="margin-top:8px;font-size:0.9rem;">{{ msg.message }}</p>
+                    <small>{{ msg.created_at }}</small>
+                    <div class="actions" style="margin-top:8px;">
+                        <form class="inline-form" method="POST" action="/admin/messages/delete/{{ msg.id }}" onsubmit="return confirm('Hapus pesan ini?')">
+                            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                    <p style="color:#888;font-size:0.85rem;">Belum ada pesan.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleEdit(id) {
+            const el = document.getElementById('edit-' + id);
+            el.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
