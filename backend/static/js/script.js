@@ -1,6 +1,4 @@
-const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-    ? 'http://localhost:5000'
-    : 'https://fadhiladika.pythonanywhere.com';
+const API_BASE = 'https://portfolio-backend-6j4r.onrender.com';
 
 document.addEventListener('DOMContentLoaded', () => {
 

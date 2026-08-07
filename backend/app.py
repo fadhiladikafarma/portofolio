@@ -1,16 +1,16 @@
-import sqlite3
 import os
 import smtplib
 import ssl
 from email.message import EmailMessage
 from functools import wraps
 from pathlib import Path
-from datetime import datetime
 
 from flask import (
     Flask, render_template, request, jsonify,
     redirect, url_for, session, flash
 )
+
+import db
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET', 'ganti-dengan-secret-key-anda')
@@ -30,36 +30,12 @@ def handle_options():
 FRONTEND_DIR = Path(__file__).parent / 'templates'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-DB_PATH = Path(__file__).parent / 'database' / 'portfolio.db'
+API_ONLY = os.getenv('API_ONLY', '').lower() in ('1', 'true', 'yes')
 
 # === DATABASE ===
 
-def get_db():
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
-    return conn
-
 def init_db():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = get_db()
-    conn.executescript('''
-        CREATE TABLE IF NOT EXISTS projects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            tags TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL,
-            message TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    ''')
-    conn.commit()
-    conn.close()
+    db.init_db()
 
 init_db()
 
@@ -80,6 +56,8 @@ def login_required(f):
 
 @app.route('/')
 def index():
+    if API_ONLY:
+        return render_template('landing.html')
     return render_template('index.html')
 
 # === API: CONTACT ===
@@ -94,11 +72,8 @@ def contact():
     if not all([name, email, message]):
         return jsonify({'success': False, 'error': 'Semua field harus diisi'}), 400
 
-    conn = get_db()
-    conn.execute('INSERT INTO messages (name, email, message) VALUES (?, ?, ?)',
-                 (name, email, message))
-    conn.commit()
-    conn.close()
+    db.execute('INSERT INTO messages (name, email, message) VALUES (?, ?, ?)',
+               (name, email, message))
 
     # Optional: kirim email notifikasi
     smtp_server = os.getenv('SMTP_SERVER', '')
@@ -123,9 +98,7 @@ def contact():
 
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
-    conn = get_db()
-    rows = conn.execute('SELECT * FROM projects ORDER BY created_at DESC').fetchall()
-    conn.close()
+    rows = db.fetch_all('SELECT * FROM projects ORDER BY created_at DESC')
     projects = [{
         'id': r['id'],
         'title': r['title'],
@@ -156,10 +129,8 @@ def admin_logout():
 @app.route('/admin')
 @login_required
 def admin_dashboard():
-    conn = get_db()
-    projects = conn.execute('SELECT * FROM projects ORDER BY created_at DESC').fetchall()
-    messages = conn.execute('SELECT * FROM messages ORDER BY created_at DESC').fetchall()
-    conn.close()
+    projects = db.fetch_all('SELECT * FROM projects ORDER BY created_at DESC')
+    messages = db.fetch_all('SELECT * FROM messages ORDER BY created_at DESC')
     return render_template('admin/dashboard.html', projects=projects, messages=messages)
 
 @app.route('/admin/projects/add', methods=['POST'])
@@ -173,11 +144,8 @@ def add_project():
         flash('Judul dan deskripsi harus diisi', 'error')
         return redirect(url_for('admin_dashboard'))
 
-    conn = get_db()
-    conn.execute('INSERT INTO projects (title, description, tags) VALUES (?, ?, ?)',
-                 (title, description, tags))
-    conn.commit()
-    conn.close()
+    db.execute('INSERT INTO projects (title, description, tags) VALUES (?, ?, ?)',
+               (title, description, tags))
     flash('Proyek berhasil ditambahkan', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -192,31 +160,22 @@ def edit_project(project_id):
         flash('Judul dan deskripsi harus diisi', 'error')
         return redirect(url_for('admin_dashboard'))
 
-    conn = get_db()
-    conn.execute('UPDATE projects SET title=?, description=?, tags=? WHERE id=?',
-                 (title, description, tags, project_id))
-    conn.commit()
-    conn.close()
+    db.execute('UPDATE projects SET title=?, description=?, tags=? WHERE id=?',
+               (title, description, tags, project_id))
     flash('Proyek berhasil diupdate', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/projects/delete/<int:project_id>', methods=['POST'])
 @login_required
 def delete_project(project_id):
-    conn = get_db()
-    conn.execute('DELETE FROM projects WHERE id=?', (project_id,))
-    conn.commit()
-    conn.close()
+    db.execute('DELETE FROM projects WHERE id=?', (project_id,))
     flash('Proyek berhasil dihapus', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/messages/delete/<int:message_id>', methods=['POST'])
 @login_required
 def delete_message(message_id):
-    conn = get_db()
-    conn.execute('DELETE FROM messages WHERE id=?', (message_id,))
-    conn.commit()
-    conn.close()
+    db.execute('DELETE FROM messages WHERE id=?', (message_id,))
     flash('Pesan berhasil dihapus', 'success')
     return redirect(url_for('admin_dashboard'))
 
