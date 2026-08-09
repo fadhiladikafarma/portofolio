@@ -147,3 +147,75 @@ async function loadProjects() {
         `;
     }
 }
+
+const chatToggle = document.getElementById('chatbotToggle');
+const chatWindow = document.getElementById('chatbotWindow');
+const chatClose = document.getElementById('chatbotClose');
+const chatForm = document.getElementById('chatbotForm');
+const chatInput = document.getElementById('chatbotInput');
+const chatBody = document.getElementById('chatbotBody');
+
+const faqAnswers = [
+    {
+        keywords: ['halo', 'hai', 'hi', 'hello', 'pagi', 'siang', 'sore', 'malam', 'assalamualaikum', 'selamat'],
+        answer: 'Halo! Senang berkenalan denganmu. Ada yang bisa saya bantu? Kamu bisa tanya tentang proyek, skill, atau cara menghubungi saya.'
+    },
+    {
+        keywords: ['proyek', 'project', 'kerjaan', 'portfolio', 'portofolio', 'website', 'buat'],
+        answer: 'Saya sedang membangun website portofolio menggunakan HTML, CSS, dan JavaScript. Bagian "Proyek" di halaman ini menampilkan proyek-proyek yang sudah saya buat.'
+    },
+    {
+        keywords: ['skill', 'keahlian', 'kemampuan', 'bisa apa', 'menguasai'],
+        answer: 'Skill yang sedang saya pelajari: HTML, CSS, JavaScript, Python, dan PHP. Kamu bisa lihat detailnya di bagian "Skill" website ini.'
+    },
+    {
+        keywords: ['kontak', 'hubungi', 'email', 'telepon', 'instagram', 'ig', 'wa', 'whatsapp', 'chat'],
+        answer: 'Kamu bisa menghubungi saya lewat email di fadhiladikafarma20@gmail.com atau Instagram @fadhilladika. Atau kirim pesan langsung lewat form kontak di bagian bawah website.'
+    },
+    {
+        keywords: ['tentang', 'siapa', 'kamu', 'kamu siapa', 'fadhil', 'adika', 'nama', 'profil'],
+        answer: 'Saya Fadhil Adika, mahasiswa semester 4 yang sedang fokus belajar pengembangan web. Website ini adalah proyek pertama saya yang dibuat dengan HTML, CSS, dan JavaScript.'
+    },
+    {
+        keywords: ['terima kasih', 'makasih', 'thanks', 'thank', 'ok', 'oke', 'sip'],
+        answer: 'Sama-sama! Kalau ada pertanyaan lain, jangan ragu untuk bertanya ya. 😊'
+    }
+];
+
+function botReply(message) {
+    const text = message.toLowerCase();
+    for (const faq of faqAnswers) {
+        if (faq.keywords.some(k => text.includes(k))) {
+            return faq.answer;
+        }
+    }
+    return 'Maaf, saya belum mengerti pertanyaan itu. Coba tanyakan tentang proyek, skill, atau cara menghubungi saya, ya!';
+}
+
+function addChatMessage(text, sender) {
+    const msg = document.createElement('div');
+    msg.className = `chat-msg ${sender}`;
+    msg.textContent = text;
+    chatBody.appendChild(msg);
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+chatToggle.addEventListener('click', () => {
+    chatWindow.classList.toggle('open');
+    if (chatWindow.classList.contains('open')) {
+        chatInput.focus();
+    }
+});
+
+chatClose.addEventListener('click', () => {
+    chatWindow.classList.remove('open');
+});
+
+chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) return;
+    addChatMessage(text, 'user');
+    chatInput.value = '';
+    setTimeout(() => addChatMessage(botReply(text), 'bot'), 500);
+});

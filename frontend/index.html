@@ -215,6 +215,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="js/three-scene.js"></script>
     <script src="js/script.js"></script>
+
+    <button class="chatbot-toggle" id="chatbotToggle" aria-label="Buka chatbot">💬</button>
+
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+            <span>Chatbot Fadhil</span>
+            <button id="chatbotClose" aria-label="Tutup chatbot">✕</button>
+        </div>
+        <div class="chatbot-body" id="chatbotBody">
+            <div class="chat-msg bot">Halo! Saya chatbot Fadhil. Tanyakan apa saja tentang website ini, misal: "apa proyek kamu?" atau "gimana cara hubungi kamu?"</div>
+        </div>
+        <form class="chatbot-form" id="chatbotForm">
+            <input type="text" id="chatbotInput" placeholder="Ketik pertanyaan..." autocomplete="off">
+            <button type="submit">Kirim</button>
+        </form>
+    </div>
 </body>
 </html>
 
