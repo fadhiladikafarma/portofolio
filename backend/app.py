@@ -81,7 +81,7 @@ def contact():
         try:
             msg = EmailMessage()
             msg.set_content(f"Dari: {name} ({email})\n\nPesan:\n{message}")
-            msg['Subject'] = f'Pesan Portfolio dari {name}'
+            msg['Subject'] = f'Pesan Portofolio dari {name}'
             msg['From'] = os.getenv('SMTP_USER', '')
             msg['To'] = os.getenv('MAIL_TO', email)
 
